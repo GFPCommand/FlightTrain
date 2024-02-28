@@ -53,10 +53,6 @@ namespace FlightTrain
 				Controls.Add(enemy);
 			}
 
-            player.Visible = true;
-
-            SpawnEnemies();
-
 			timer.Tick += Update;
             timer.Interval = 10;
 
@@ -136,6 +132,8 @@ namespace FlightTrain
 
                 panel.Visible = false;
 
+                player.Visible = true;
+
                 timer.Start();
             }
 
@@ -143,6 +141,8 @@ namespace FlightTrain
             {
                 _isStart = false;
                 panel.Visible = true;
+
+                player.Visible = false;
 
                 _endTime = DateTime.Now;
                 _resultTime = new DateTime(_endTime.Year, _endTime.Month, _endTime.Day, _endTime.Hour, _endTime.Minute - _startTime.Minute, _endTime.Second - _startTime.Second, Math.Abs(_endTime.Millisecond - _startTime.Millisecond));
