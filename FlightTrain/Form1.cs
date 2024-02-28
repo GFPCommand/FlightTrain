@@ -2,13 +2,12 @@ using Timer = System.Windows.Forms.Timer;
 
 namespace FlightTrain
 {
-    public partial class Form1 : Form
+    public partial class SpeedTrainingForm : Form
     {
         private readonly int _maxX, _maxY;
+        private readonly int _enemyCount = 3;
+
         private const int _elementSize = 50;
-        private int _verticalTransition1,_horizontalTransition1;
-        private int _verticalTransition2, _horizontalTransition2;
-        private int _verticalTransition3, _horizontalTransition3;
 
         private const int _transitionCoefficient = 5;
 
@@ -17,17 +16,19 @@ namespace FlightTrain
         private bool _isCollision;
         private bool _isStart;
 
+		private List<Enemy> _enemies = new();
+
+		private DateTime _startTime, _endTime, _resultTime;
+
+		readonly Timer timer = new();        
+
         private delegate void SelectWayObject(short num);
         private delegate void ShowHideMenuObj(object? sender, EventArgs e);
 
         private event SelectWayObject SelectWayObjectEvent;
         private event ShowHideMenuObj MenuEvent;
 
-        private DateTime _startTime, _endTime, _resultTime;
-
-        Timer timer = new();
-
-        public Form1()
+        public SpeedTrainingForm()
         {
             InitializeComponent();
 
@@ -38,11 +39,25 @@ namespace FlightTrain
 
             _isCollision = false;
             _isStart = false;
+            
+            for (int i = 0; i < _enemyCount; i++)
+			{
+				_enemies.Add(new Enemy());                
+			}
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            timer.Tick += Update;
+            foreach (var enemy in _enemies)
+            {
+				Controls.Add(enemy);
+			}
+
+            player.Visible = true;
+
+            SpawnEnemies();
+
+			timer.Tick += Update;
             timer.Interval = 10;
 
             SelectWayObjectEvent += SelectWay;
@@ -59,48 +74,29 @@ namespace FlightTrain
         {
             if (e.Button == MouseButtons.Left && _isStart)
             {
-                Point pos = new Point(Cursor.Position.X -_x, Cursor.Position.Y - _y);
+                Point pos = new(Cursor.Position.X -_x, Cursor.Position.Y - _y);
                 player.Location = PointToClient(pos);
             }
         }
 
-        private void Update(object? sender, EventArgs e)
+		private void exit_Click(object sender, EventArgs e) => Application.Exit();
+
+		private void Update(object? sender, EventArgs e)
         {
-            enemy1.Location = new (enemy1.Location.X + _horizontalTransition1, enemy1.Location.Y + _verticalTransition1);
-            enemy2.Location = new (enemy2.Location.X - _horizontalTransition2, enemy2.Location.Y - _verticalTransition2);
-            enemy3.Location = new (enemy3.Location.X + _horizontalTransition3, enemy3.Location.Y - _verticalTransition3);
-
-            if (enemy1.Location.X > _maxX - _elementSize || enemy1.Location.Y > _maxY - _elementSize || enemy1.Location.X < 0 || enemy1.Location.Y < 0)
+            for (short i = 0; i < _enemyCount; i++)
             {
-                if (enemy1.Location.X > _maxX - _elementSize) enemy1.Location = new(_maxX - _elementSize, enemy1.Location.Y);
-                if (enemy1.Location.Y > _maxY - _elementSize) enemy1.Location = new(enemy1.Location.Y, _maxY - _elementSize);
+                _enemies[i].Location = new(_enemies[i].Location.X + _enemies[i].HorizontalTransition, _enemies[i].Location.Y + _enemies[i].VerticalTransition);
 
-                if (enemy1.Location.X < 0) enemy1.Location = new(0, enemy1.Location.Y);
-                if (enemy1.Location.Y < 0) enemy1.Location = new(enemy1.Location.X, 0);
-                
-                SelectWayObjectEvent?.Invoke(1);
-            }
-            
-            if (enemy2.Location.X > _maxX - _elementSize || enemy2.Location.Y > _maxY - _elementSize || enemy2.Location.X < 0 || enemy2.Location.Y < 0)
-            {
-                if (enemy2.Location.X > _maxX - _elementSize) enemy2.Location = new(_maxX - _elementSize, enemy2.Location.Y);
-                if (enemy2.Location.Y > _maxY - _elementSize) enemy2.Location = new(enemy2.Location.Y, _maxY - _elementSize);
+                if (_enemies[i].Location.X > _maxX - _elementSize || _enemies[i].Location.Y > _maxY - _elementSize || _enemies[i].Location.X < 0 || _enemies[i].Location.Y < 0)
+                {
+                    if (_enemies[i].Location.X > _maxX - _elementSize) _enemies[i].Location = new(_maxX - _elementSize, _enemies[i].Location.Y);
+                    if (_enemies[i].Location.Y > _maxY - _elementSize) _enemies[i].Location = new(_enemies[i].Location.Y, _maxY - _elementSize);
 
-                if (enemy2.Location.X < 0) enemy2.Location = new(0, enemy2.Location.Y);
-                if (enemy2.Location.Y < 0) enemy2.Location = new(enemy2.Location.X, 0);
+                    if (_enemies[i].Location.X < 0) _enemies[i].Location = new(0, _enemies[i].Location.Y);
+                    if (_enemies[i].Location.Y < 0) _enemies[i].Location = new(_enemies[i].Location.X, 0);
 
-                SelectWayObjectEvent?.Invoke(2);
-            }
-            
-            if (enemy3.Location.X > _maxX - _elementSize  || enemy3.Location.Y > _maxY - _elementSize  || enemy3.Location.X < 0 || enemy3.Location.Y < 0)
-            {
-                if (enemy3.Location.X > _maxX - _elementSize) enemy3.Location = new(_maxX - _elementSize, enemy3.Location.Y);
-                if (enemy3.Location.Y > _maxY - _elementSize) enemy3.Location = new(enemy1.Location.Y, _maxY - _elementSize);
-
-                if (enemy3.Location.X < 0) enemy3.Location = new(0, enemy3.Location.Y);
-                if (enemy3.Location.Y < 0) enemy3.Location = new(enemy3.Location.X, 0);
-
-                SelectWayObjectEvent?.Invoke(3);
+                    SelectWayObjectEvent?.Invoke(i);
+                }
             }
 
             if (player.Location.X > _maxX)
@@ -115,45 +111,13 @@ namespace FlightTrain
             {
                 MenuEvent?.Invoke(sender, e);
             }
-
-            
         }
-
-        private void SelectWay(short enemyNumber)
-        {
-            int choose;
-
-            Random rand = new Random();
-
-            switch (enemyNumber)
-            {
-                case 1:
-                    choose = rand.Next(0, 8);
-
-                    SelectWayOptions(choose, enemyNumber);
-                    break;
-                case 2:
-                    choose = rand.Next(0, 8);
-
-                    SelectWayOptions(choose, enemyNumber);
-                    break;
-                case 3:
-                    choose = rand.Next(0, 8);
-
-                    SelectWayOptions(choose, enemyNumber);
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        private void exit_Click(object sender, EventArgs e) => Application.Exit();
 
         private bool CheckCollisionObjects()
         {
-            if (player.Bounds.IntersectsWith(enemy1.Bounds) || player.Bounds.IntersectsWith(enemy2.Bounds) || player.Bounds.IntersectsWith(enemy3.Bounds))
+            foreach (var enemy in _enemies)
             {
-                _isCollision = true;
+                if (player.Bounds.IntersectsWith(enemy.Bounds)) _isCollision = true;
             }
 
             return _isCollision;
@@ -171,7 +135,6 @@ namespace FlightTrain
                 _isCollision = false;
 
                 panel.Visible = false;
-                
 
                 timer.Start();
             }
@@ -184,175 +147,74 @@ namespace FlightTrain
                 _endTime = DateTime.Now;
                 _resultTime = new DateTime(_endTime.Year, _endTime.Month, _endTime.Day, _endTime.Hour, _endTime.Minute - _startTime.Minute, _endTime.Second - _startTime.Second, Math.Abs(_endTime.Millisecond - _startTime.Millisecond));
 
-                StartLoseLabel.Text = "You lose";
-                time.Text = $"{_resultTime.Minute}m:{_resultTime.Second}s:{_resultTime.Millisecond}ms";
+                StartLoseLabel.Text = "Вы проиграли";
+                time.Text = $"{_resultTime.Minute}м:{_resultTime.Second}с:{_resultTime.Millisecond}мс";
                 timer.Stop();
             }
         }
 
         private void SpawnEnemies()
         {
-            Random rand = new Random();
+            Random rand = new();
 
-            int posX = rand.Next(0, _maxY - _elementSize);
-            int posY = rand.Next(0, _maxY - _elementSize);
+            for (short i = 0; i < _enemyCount; i++)
+            {
+                int posX = rand.Next(0, _maxY - _elementSize);
+                int posY = rand.Next(0, _maxY - _elementSize);
 
-            enemy1.Location = new Point(posX, posY);
-            enemy1.Visible = true;
-
-            posX = rand.Next(0, _maxY - _elementSize);
-            posY = rand.Next(0, _maxY - _elementSize);
-
-            enemy2.Location = new Point(posX, posY);
-            enemy2.Visible = true;
-
-            posX = rand.Next(0, _maxY - _elementSize);
-            posY = rand.Next(0, _maxY - _elementSize);
-
-            enemy3.Location = new Point(posX, posY);
-            enemy3.Visible = true;
-
-            posX = rand.Next(0, _maxY - _elementSize);
-            posY = rand.Next(0, _maxY - _elementSize);
-
-            player.Location = new Point(posX, posY);
-            player.Visible = true;
-
-            SelectWay(1);
-            SelectWay(2);
-            SelectWay(3);
+                _enemies[i].Location = new Point(posX, posY);
+                _enemies[i].Visible = true;
+                SelectWay(i);
+            }
         }
 
-        private void SelectWayOptions(int rndVal, short num)
+		private void SelectWay(short enemyNumber)
+		{
+			int choose;
+
+			Random rand = new();
+
+            choose = rand.Next(0, 8);
+
+            SelectWayOptions(choose, enemyNumber);
+		}
+
+		private void SelectWayOptions(int rndVal, short num)
         {
             switch (rndVal)
             {
                 case 0: //up
-                    if (num == 1)
-                    {
-                        _verticalTransition1 = _transitionCoefficient;
-                        _horizontalTransition1 = 0;
-                    } else if (num == 2)
-                    {
-                        _verticalTransition2 = _transitionCoefficient;
-                        _horizontalTransition2 = 0;
-                    } else if (num == 3)
-                    {
-                        _verticalTransition3 = _transitionCoefficient;
-                        _horizontalTransition3 = 0;
-                    }
+                    _enemies[num].VerticalTransition = _transitionCoefficient;
+                    _enemies[num].HorizontalTransition = 0;
                     break;
                 case 1://down
-                    if (num == 1)
-                    {
-                        _verticalTransition1 = -_transitionCoefficient;
-                        _horizontalTransition1 = 0;
-                    }
-                    else if (num == 2)
-                    {
-                        _verticalTransition2 = -_transitionCoefficient;
-                        _horizontalTransition2 = 0;
-                    }
-                    else if (num == 3)
-                    {
-                        _verticalTransition3 = -_transitionCoefficient;
-                        _horizontalTransition3 = 0;
-                    }
-                    break;
+					_enemies[num].VerticalTransition = - _transitionCoefficient;
+					_enemies[num].HorizontalTransition = 0;
+					break;
                 case 2://right
-                    if (num == 1)
-                    {
-                        _verticalTransition1 = 0;
-                        _horizontalTransition1 = _transitionCoefficient;
-                    }
-                    else if (num == 2)
-                    {
-                        _verticalTransition2 = 0;
-                        _horizontalTransition2 = _transitionCoefficient;
-                    }
-                    else if (num == 3)
-                    {
-                        _verticalTransition3 = 0;
-                        _horizontalTransition3 = _transitionCoefficient;
-                    }
+                    _enemies[num].VerticalTransition = 0;
+                    _enemies[num].HorizontalTransition = _transitionCoefficient;
                     break;
                 case 3://left
-                    if (num == 1)
-                    {
-                        _verticalTransition1 = 0;
-                        _horizontalTransition1 = -_transitionCoefficient;
-                    }
-                    else if (num == 2)
-                    {
-                        _verticalTransition2 = 0;
-                        _horizontalTransition2 = -_transitionCoefficient;
-                    }
-                    else if (num == 3)
-                    {
-                        _verticalTransition3 = 0;
-                        _horizontalTransition3 = -_transitionCoefficient;
-                    }
+					_enemies[num].VerticalTransition = 0;
+					_enemies[num].HorizontalTransition = - _transitionCoefficient;
                     break;
                 case 4:
-                    if (num == 1)
-                    {
-                        _verticalTransition1 = -_transitionCoefficient;
-                        _horizontalTransition1 = _transitionCoefficient;
-                    } else if (num == 2)
-                    {
-                        _verticalTransition2 = -_transitionCoefficient;
-                        _horizontalTransition2 = _transitionCoefficient;
-                    } else if (num == 3)
-                    {
-                        _verticalTransition3 = -_transitionCoefficient;
-                        _horizontalTransition3 = _transitionCoefficient;
-                    }
+                    _enemies[num].VerticalTransition = - _transitionCoefficient;
+                    _enemies[num].HorizontalTransition = _transitionCoefficient;
                     break;
                 case 5:
-                    if (num == 1)
-                    {
-                        _verticalTransition1 = _transitionCoefficient;
-                        _horizontalTransition1 = _transitionCoefficient;
-                    } else if (num == 2)
-                    {
-                        _verticalTransition2 = _transitionCoefficient;
-                        _horizontalTransition2 = _transitionCoefficient;
-                    } else if (num == 3)
-                    {
-                        _verticalTransition3 = _transitionCoefficient;
-                        _horizontalTransition3 = _transitionCoefficient;
-                    }
+					_enemies[num].VerticalTransition = _transitionCoefficient;
+                    _enemies[num].HorizontalTransition = _transitionCoefficient;
                     break;
                 case 6:
-                    if (num == 1)
-                    {
-                        _verticalTransition1 = _transitionCoefficient;
-                        _horizontalTransition1 = -_transitionCoefficient;
-                    } else if (num == 2)
-                    {
-                        _verticalTransition2 = _transitionCoefficient;
-                        _horizontalTransition2 = -_transitionCoefficient;
-                    } else if (num == 3)
-                    {
-                        _verticalTransition3 = _transitionCoefficient;
-                        _horizontalTransition3 = -_transitionCoefficient;
-                    }
+					_enemies[num].VerticalTransition = _transitionCoefficient;
+					_enemies[num].HorizontalTransition = - _transitionCoefficient;
                     break;
                 case 7:
-                    if (num == 1)
-                    {
-                        _verticalTransition1 = -_transitionCoefficient;
-                        _horizontalTransition1 = -_transitionCoefficient;
-                    } else if (num == 2)
-                    {
-                        _verticalTransition2 = -_transitionCoefficient;
-                        _horizontalTransition2 = -_transitionCoefficient;
-                    } else if (num == 3)
-                    {
-                        _verticalTransition3 = -_transitionCoefficient;
-                        _horizontalTransition3 = -_transitionCoefficient;
-                    }
-                    break;
+					_enemies[num].VerticalTransition = - _transitionCoefficient;
+					_enemies[num].HorizontalTransition = - _transitionCoefficient;
+					break;
                 default:
                     break;
             }
