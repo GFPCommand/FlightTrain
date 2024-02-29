@@ -86,7 +86,7 @@ namespace FlightTrain
                 if (_enemies[i].Location.X > _maxX - _elementSize || _enemies[i].Location.Y > _maxY - _elementSize || _enemies[i].Location.X < 0 || _enemies[i].Location.Y < 0)
                 {
                     if (_enemies[i].Location.X > _maxX - _elementSize) _enemies[i].Location = new(_maxX - _elementSize, _enemies[i].Location.Y);
-                    if (_enemies[i].Location.Y > _maxY - _elementSize) _enemies[i].Location = new(_enemies[i].Location.Y, _maxY - _elementSize);
+                    if (_enemies[i].Location.Y > _maxY - _elementSize) _enemies[i].Location = new(_enemies[i].Location.X, _maxY - _elementSize);
 
                     if (_enemies[i].Location.X < 0) _enemies[i].Location = new(0, _enemies[i].Location.Y);
                     if (_enemies[i].Location.Y < 0) _enemies[i].Location = new(_enemies[i].Location.X, 0);
@@ -183,35 +183,35 @@ namespace FlightTrain
         {
             switch (rndVal)
             {
-                case 0: //up
+                case 0: // up
                     _enemies[num].VerticalTransition = _transitionCoefficient;
                     _enemies[num].HorizontalTransition = 0;
                     break;
-                case 1://down
+                case 1: // down
 					_enemies[num].VerticalTransition = - _transitionCoefficient;
 					_enemies[num].HorizontalTransition = 0;
 					break;
-                case 2://right
+                case 2: // right
                     _enemies[num].VerticalTransition = 0;
                     _enemies[num].HorizontalTransition = _transitionCoefficient;
                     break;
-                case 3://left
+                case 3: // left
 					_enemies[num].VerticalTransition = 0;
 					_enemies[num].HorizontalTransition = - _transitionCoefficient;
                     break;
-                case 4:
+                case 4: // down & right
                     _enemies[num].VerticalTransition = - _transitionCoefficient;
                     _enemies[num].HorizontalTransition = _transitionCoefficient;
                     break;
-                case 5:
+                case 5: // up & right
 					_enemies[num].VerticalTransition = _transitionCoefficient;
                     _enemies[num].HorizontalTransition = _transitionCoefficient;
                     break;
-                case 6:
+                case 6: // up & left
 					_enemies[num].VerticalTransition = _transitionCoefficient;
 					_enemies[num].HorizontalTransition = - _transitionCoefficient;
                     break;
-                case 7:
+                case 7: // down & left
 					_enemies[num].VerticalTransition = - _transitionCoefficient;
 					_enemies[num].HorizontalTransition = - _transitionCoefficient;
 					break;
